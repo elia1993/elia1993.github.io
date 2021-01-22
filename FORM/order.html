@@ -91,8 +91,52 @@ function hideTotal() {
 	var totalEl = document.getElementById('totalPrice');
 	totalEl.style.display = 'none';
 }
-
     </script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.0/jquery.min.js"></script>
+    <script type="text/javascript" src="js/money.min.js"></script>
+    <script type="text/javascript" src="js/accounting.min.js"></script>
+    <script type="text/javascript">// <![CDATA[
+        $(document).ready(function(){
+          fx.base = "EUR";
+          fx.settings = {
+            from : "EUR"
+          };
+     
+          var amount = total; //in SolidShops, you could use: {{ product.price }}
+          // Load exchange rates data via the cross-domain/AJAX proxy:
+     
+          $.getJSON(
+              'http://openexchangerates.org/latest.json',
+              function(data) {
+                  // Check money.js has finished loading:
+                  if ( typeof fx !== "undefined" && fx.rates ) {
+                      fx.rates = data.rates;
+                      fx.base = data.base;
+                  } else {
+                      // If not, apply to fxSetup global:
+                      var fxSetup = {
+                          rates : data.rates,
+                          base : data.base
+                      }
+                  }
+     
+                 // now that we have exchange rates, add a few to our page
+                 var USD = fx.convert(amount, {to: "USD"}); //13.22784197768393
+                 var GBP = fx.convert(amount, {to: "GBP"}); //8.567532636985659
+                 var JPY = fx.convert(amount, {to: "JPY"}); //1028.1670562349989
+     
+                 // we can now use the accounting.js library to format the numbers properly
+                 USD = accounting.formatMoney(USD, "$ ", 2, ",", ".");
+                 GBP = accounting.formatMoney(GBP, "£ ", 2, ",", ".");
+                 JPY = accounting.formatMoney(JPY, "¥ ", 2, ",", ".");
+     
+                 $("ul.currencies").append("<li>USD estimate: " + USD + "</li>");
+                 $("ul.currencies").append("<li>GBP estimate: " + GBP + "</li>");
+                 $("ul.currencies").append("<li>JPY estimate: " + JPY + "</li>");
+              }
+          );
+        });
+        </script>
     <style>
         html, body {
         height: 100%;
@@ -303,6 +347,7 @@ function hideTotal() {
         </form>
         <button  onclick="calculateTotal()">Calculate</button>
             <h3 align="center" id='totalPrice'></h3>
+            <ul class="currencies"></ul>
             <h3 align="center">amount of items: 1</h3>
        
         
